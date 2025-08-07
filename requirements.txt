@@ -4,5 +4,6 @@ requests
 scikit-learn
 pdfplumber
 PyMuPDF
+python-dotenv
 faiss-cpu
 gunicorn
