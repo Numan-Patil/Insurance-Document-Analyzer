@@ -340,6 +340,28 @@ def webhook_query():
             'message': f'Query webhook failed: {str(e)}'
         }), 500
 
+@app.route('/api/v1/hackrx/run', methods=['POST'])
+def run_hackrx():
+    try:
+        data = request.get_json()
+        logger.info("Received /hackrx/run webhook data: %s", data)
+
+        # Optionally: Add any processing logic here
+        result = {
+            "status": "received",
+            "message": "Webhook handled successfully",
+            "received_data": data
+        }
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        logger.error("Error in /hackrx/run webhook: %s", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 with app.app_context():
     # Import models to ensure tables are created
     import models
