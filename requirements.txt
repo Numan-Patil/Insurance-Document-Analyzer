@@ -5,3 +5,4 @@ scikit-learn
 pdfplumber
 PyMuPDF
 faiss-cpu
+gunicorn
