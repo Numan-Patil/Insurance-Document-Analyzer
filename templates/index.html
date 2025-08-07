@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Document Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <i class="fas fa-comments"></i>
+                    <span>Conversations</span>
+                </div>
+                <button class="new-chat-btn">
+                    <i class="fas fa-plus"></i>
+                    New Chat
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="chat-history-section">
+                    <div class="section-title">Recent</div>
+                    <div class="chat-history-list" id="chatHistoryList">
+                        <div class="chat-history-item active">
+                            <div class="chat-preview">
+                                <div class="chat-title">Current Session</div>
+                                <div class="chat-time">Active now</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-section">
+                    <div class="section-title">Status</div>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">Documents</span>
+                            <span class="status-value" id="docCount">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Ready</span>
+                            <span class="status-value" id="vectorStatus">No</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-area">
+            <div class="chat-container">
+                <div class="messages-container" id="chatMessages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="welcome-content">
+                            <h3>Insurance Document Analyzer</h3>
+                            <p>Upload policy documents and ask questions about your coverage, claims, and policy details.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <div class="input-container">
+                        <div class="uploaded-files" id="uploadedFiles" style="display: none;">
+                            <div class="files-header">
+                                <span>Selected files</span>
+                                <button class="clear-files-btn" id="clearFilesBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="files-list" id="filesList"></div>
+                        </div>
+
+                        
+
+                        <div class="input-wrapper">
+                            <button class="file-upload-btn" id="fileUploadBtn">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <input 
+                                type="text" 
+                                id="queryInput" 
+                                placeholder="Ask about your insurance coverage..."
+                            >
+                            <button class="voice-btn" id="voiceBtn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <div class="language-picker-inline">
+                                <button class="language-btn" id="languageBtn" title="Select Language">
+                                    <i class="fas fa-language"></i>
+                                </button>
+                                <div class="language-dropdown-menu" id="languageDropdownMenu">
+                                    <div class="language-option" data-value="en-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">English (India)</span>
+                                    </div>
+                                    <div class="language-option" data-value="hi-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">हिन्दी (Hindi)</span>
+                                    </div>
+                                    <div class="language-option" data-value="bn-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">বাংলা (Bengali)</span>
+                                    </div>
+                                    <div class="language-option" data-value="te-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">తెలుగు (Telugu)</span>
+                                    </div>
+                                    <div class="language-option" data-value="mr-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">मराठी (Marathi)</span>
+                                    </div>
+                                    <div class="language-option" data-value="ta-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">தமிழ் (Tamil)</span>
+                                    </div>
+                                    <div class="language-option" data-value="gu-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">ગુજરાતી (Gujarati)</span>
+                                    </div>
+                                    <div class="language-option" data-value="kn-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">ಕನ್ನಡ (Kannada)</span>
+                                    </div>
+                                    <div class="language-option" data-value="ml-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">മലയാളം (Malayalam)</span>
+                                    </div>
+                                    <div class="language-option" data-value="pa-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">ਪੰਜਾਬੀ (Punjabi)</span>
+                                    </div>
+                                    <div class="language-option" data-value="or-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">ଓଡ଼ିଆ (Odia)</span>
+                                    </div>
+                                    <div class="language-option" data-value="as-IN">
+                                        <span class="language-flag">🇮🇳</span>
+                                        <span class="language-name">অসমীয়া (Assamese)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+
+                        <input type="file" id="fileInput" multiple accept=".pdf" style="display: none;">
+
+                        <div class="input-help">
+                            <i class="fas fa-info-circle"></i>
+                            Upload PDF documents or ask questions about your policies
+                        </div>
+
+                        <div id="uploadStatus"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Latest Button -->
+    <button class="scroll-to-latest" id="scrollToLatestBtn" title="Scroll to latest message">
+        <i class="fas fa-arrow-down"></i>
+    </button>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <p class="mt-3 mb-0">Processing documents...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
