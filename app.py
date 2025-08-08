@@ -341,25 +341,111 @@ def webhook_query():
         }), 500
 
 @app.route('/api/v1/hackrx/run', methods=['POST'])
-def run_hackrx():
+def hackrx_run():
+    """HackRX API endpoint for document processing and question answering"""
     try:
-        data = request.get_json()
-        logger.info("Received /hackrx/run webhook data: %s", data)
-
-        # Optionally: Add any processing logic here
-        result = {
-            "status": "received",
-            "message": "Webhook handled successfully",
-            "received_data": data
+        # Get the payload
+        payload = request.get_json()
+        logger.info(f"HackRX API received request: {payload}")
+        
+        if not payload:
+            return jsonify({'error': 'No JSON payload provided'}), 400
+            
+        # Validate required fields
+        if 'documents' not in payload or 'questions' not in payload:
+            return jsonify({'error': 'Missing required fields: documents and questions'}), 400
+            
+        documents_url = payload.get('documents')
+        questions = payload.get('questions', [])
+        
+        if not documents_url:
+            return jsonify({'error': 'Document URL is required'}), 400
+            
+        if not questions or not isinstance(questions, list):
+            return jsonify({'error': 'Questions must be a non-empty list'}), 400
+        
+        logger.info(f"Processing document URL: {documents_url}")
+        logger.info(f"Number of questions: {len(questions)}")
+        
+        # Download and process the document
+        import requests
+        import tempfile
+        import os
+        
+        # Clear previous documents
+        vector_store.clear_all_documents()
+        
+        # Download the document
+        try:
+            response = requests.get(documents_url, timeout=30)
+            response.raise_for_status()
+            
+            # Save to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                temp_file.write(response.content)
+                temp_filepath = temp_file.name
+            
+            # Process the PDF
+            filename = 'downloaded_policy.pdf'
+            chunks = document_processor.process_pdf(temp_filepath, filename)
+            
+            # Add to vector store
+            vector_store.add_documents(chunks)
+            
+            # Clean up temp file
+            os.unlink(temp_filepath)
+            
+            logger.info(f"Successfully processed document with {len(chunks)} chunks")
+            
+        except requests.RequestException as e:
+            logger.error(f"Error downloading document: {str(e)}")
+            return jsonify({'error': f'Failed to download document: {str(e)}'}), 400
+        except Exception as e:
+            logger.error(f"Error processing document: {str(e)}")
+            return jsonify({'error': f'Failed to process document: {str(e)}'}), 500
+        
+        # Process each question
+        answers = []
+        
+        for question in questions:
+            try:
+                logger.info(f"Processing question: {question}")
+                
+                # Search for relevant documents
+                relevant_docs = vector_store.search_documents(question, k=10)
+                
+                if not relevant_docs:
+                    logger.warning(f"No relevant documents found for question: {question}")
+                    answers.append("I couldn't find relevant information in the document to answer this question.")
+                    continue
+                
+                # Generate answer using LLM
+                response = llm_client.generate_decision(question, relevant_docs)
+                
+                if isinstance(response, dict) and 'response' in response:
+                    answer = response['response']
+                else:
+                    answer = str(response) if response else "I couldn't generate a proper answer for this question."
+                
+                answers.append(answer)
+                logger.info(f"Generated answer for question: {question[:50]}...")
+                
+            except Exception as e:
+                logger.error(f"Error processing question '{question}': {str(e)}")
+                answers.append(f"Error processing this question: {str(e)}")
+        
+        # Return the structured response
+        response_data = {
+            'answers': answers
         }
-
-        return jsonify(result), 200
-
+        
+        logger.info(f"Returning {len(answers)} answers")
+        return jsonify(response_data), 200
+        
     except Exception as e:
-        logger.error("Error in /hackrx/run webhook: %s", str(e))
+        logger.error(f"HackRX API error: {str(e)}", exc_info=True)
         return jsonify({
-            "status": "error",
-            "message": str(e)
+            'error': f'API processing failed: {str(e)}'
         }), 500
 
 with app.app_context():
